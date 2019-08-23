@@ -43,7 +43,6 @@ export default () => {
 const ThemeConsumer = props => {
   const { theme } = useTheme();
   const { t } = useTranslation();
-
   return (
     <PaperProvider theme={theme}>
       <AppContextProvider>

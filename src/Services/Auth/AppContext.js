@@ -49,8 +49,11 @@ export const AppContextProvider = props => {
     loginUser(reqData);
   }
 
+  const isHermes = () => global.HermesInternal != null;
   // check loggedin on mount
   useEffect(() => {
+    console.warn("isHermes", isHermes());
+
     state == APP_STATE.UNKNOWN && checkLogin();
   }, []);
 

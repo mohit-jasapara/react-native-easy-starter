@@ -77,10 +77,10 @@ import com.android.build.OutputFile
 
 project.ext.react = [
     entryFile: "index.js",
-    bundleInDebug: false,
-    bundleInRelease:true
-
+    enableHermes: true  // clean and rebuild if changing
 ]
+
+
 // onhold for androidX support
 // apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 apply from: "../../node_modules/react-native/react.gradle"
@@ -110,7 +110,16 @@ def enableProguardInReleaseBuilds = false
  * when using with locales other than en-US.
  * Note that this variant is about 6MiB larger per architecture than default.
  */
-def useIntlJsc = false
+ def jscFlavor = 'org.webkit:android-jsc:+'
+
+ /**
+  * Whether to enable the Hermes VM.
+  *
+  * This should be set on project.ext.react and mirrored here.  If it is not set
+  * on project.ext.react, JavaScript will not be compiled to Hermes Bytecode
+  * and the benefits of using Hermes will therefore be sharply reduced.
+  */
+ def enableHermes = project.ext.react.get("enableHermes", false);
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -155,6 +164,7 @@ android {
             }
         }
     }
+
 
 
     splits {
@@ -212,6 +222,14 @@ android {
             }
         }
     }
+    packagingOptions {
+        pickFirst '**/armeabi-v7a/libc++_shared.so'
+        pickFirst '**/x86/libc++_shared.so'
+        pickFirst '**/arm64-v8a/libc++_shared.so'
+        pickFirst '**/x86_64/libc++_shared.so'
+        pickFirst '**/x86/libjsc.so'
+        pickFirst '**/armeabi-v7a/libjsc.so'
+    }
 }
 
 dependencies {
@@ -219,14 +237,13 @@ dependencies {
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.facebook.react:react-native:+"  // From node_modules
-
-    // JSC from node_modules
-    if (useIntlJsc) {
-        implementation 'org.webkit:android-jsc-intl:+'
+    if (enableHermes) {
+      def hermesPath = "../../node_modules/hermesvm/android/";
+      debugImplementation files(hermesPath + "hermes-debug.aar")
+      releaseImplementation files(hermesPath + "hermes-release.aar")
     } else {
-        implementation 'org.webkit:android-jsc:+'
+      implementation jscFlavor
     }
-
 }
 
 // Run this once to be able to run the application with BUCK
